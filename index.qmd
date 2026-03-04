@@ -7,6 +7,12 @@ format:
     toc: true
     number-sections: true
 jupyter: python3
+execute:
+  echo: true
+  output: true
+  warning: false 
+  message: false
+  daemon: 300 
 ---
 
 # Introduction to the Scenario
@@ -26,7 +32,7 @@ Gogoro is a highly innovative Taiwanese company primarily known for its electric
 The primary purpose of this computational case study is to take Gogoro as an empirical subject to examine the causal factors that directly affect customer satisfaction and follow-on customer loyalty for an established green product. 
 
 **Research Scope:**
-A quantitative sample of $n=208$ respondents was collected from current product users. The research structural model proposes that independent variables—namely *Function*, *Usability*, *Price*, and *Brand Image*—will affect the mediator *Customer Satisfaction* significantly, yielding definitive *Customer Loyalty*. The subsequent computational results using Python will ultimately show that brand image affects customer satisfaction the most, followed by function. The deep managerial and environmental implications will be synthesized based on these empirical results.
+A quantitative sample of $n=208$ respondents was collected from current product users. The research structural model proposes that independent variables—namely *Function*, *Usability*, *Price*, and *Brand Image* - will affect the mediator *Customer Satisfaction* significantly, yielding definitive *Customer Loyalty*. The subsequent computational results using Python will ultimately show that brand image affects customer satisfaction the most, followed by function. The deep managerial and environmental implications will be synthesized based on these empirical results.
 
 # Synthetic Dataset Generation
 
@@ -68,18 +74,22 @@ To identify and remove incomplete responses or straight-lining to ensure the sam
 From a statistical analysis perspective, raw survey data is extremely noisy and often contains human-derived errors. Implementing robust data cleaning protocols is non-negotiable for establishing empirical credibility.
 
 **Missing Values ($NaN$):** 
+
 Missing data fundamentally distorts the geometry of datasets. It can bias results computationally (e.g., matrix inversion algorithms cannot process `NaN` values, leading to software crashes) and theoretically (e.g., the missingness might not be random but systematic, indicating a flaw in the survey instrument). 
+
 - *Mathematical Impact:* Reduces the effective degrees of freedom ($df$) in regression equations. 
 - *Standard Criteria:* Common criteria dictate utilizing imputation techniques (like mean substitution or KNN imputation) for small gaps, or outright replacing/dropping survey records with > 10% missing values to preserve model integrity.
 
-**Straight-lining (Zero Variance):** 
+**Straight-lining (Zero Variance):**
+
 This phenomenon occurs when a respondent selects the exact same answer down a column (e.g., "3 - Neutral" for 40 consecutive questions). This indicates a severe lack of respondent engagement and introduces artificial correlation into the covariance matrix, violating the fundamental assumption that survey data reflects genuine physiological or psychological variability in a real population. 
+
 - *Standard Criteria:* To programmatically detect this, we calculate the mathematical variance ($\sigma^2$) across a continuous subset of items for an individual respondent. If the variance is exactly $0$ (or below a tiny threshold like $0.1$), the case constitutes straight-lining and should be instantly excluded from the dataset.
 
 **Industry Application:** In big tech companies conducting user experience (UX) research, automated pipelines immediately flag and drop straight-lined responses to prevent multi-million dollar product decisions from being corrupted by non-engaged click-farm respondents.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 
 df = pd.read_csv('gogoro_data.csv')
@@ -97,7 +107,10 @@ print("Rows remaining:", len(v_df))
 ```
 
 ### Student Task
-Open Visual Studio Code. Create a new file named `StudentName_Cleaning.py`. Modify the variance threshold from $> 0$ to $> 0.5$ and observe the change in the number of rows remaining.
+
+Open Visual Studio Code. 
+Create a new file named `StudentName_Cleaning.py`. 
+Modify the variance threshold from $> 0$ to $> 0.5$ and observe the change in the number of rows remaining.
 
 ### Evaluation Questions
 1. Why is data cleaning the necessary first step before any statistical analysis?
@@ -117,13 +130,14 @@ Before engaging in complex predictive modeling, researchers must thoroughly unde
 For demographic variables (like age, gender, geographic location or income), calculating raw frequencies, proportions, and arithmetic means helps researchers definitively understand if their empirical sample is statistically representative of the true overarching population of green product consumers. 
 
 **Mathematical Foundations:**
+
 - **Central Tendency ($\mu$ or $\bar{x}$):** Represents the "expected value" or structural center of gravity of a specific feature. In consumer research, knowing the average age fundamentally anchors the marketing demographic.
 - **Dispersion ($\sigma$ for standard dev):** Represents the average Euclidean distance of all sample data points from the central mean. Wide dispersion means high variability in opinions; narrow dispersion means high consensus amongst users.
 
 **Industry Application:** A marketing division at an automotive firm like Ford or Tesla relies deeply on descriptive pivot tables and dashboards to verify that early-adopter sample profiles (e.g., 25-35 year olds with high income) match their targeted ad-spend profiles, before they approve widespread structural analysis.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 
 df = pd.read_csv('gogoro_data.csv')
@@ -154,6 +168,42 @@ To use Mahalanobis Distance to identify multivariate outliers that may skew the 
 ### Statistical Perspective
 An outlier is a data point that differs significantly from other observations, often the result of data entry errors or truly anomalous respondent behavior. In univariate analysis, a boxplot handles this easily. In multivariate analysis, assumptions revolve around normality and the absence of extreme deviations across combined variables. A point might not be an outlier in any single variable but could be anomalous when predicting the relationship matrix.
 
+#### Single-Variable Outlier Detection (IQR Method)
+
+For a single variable, the standard approach uses the **Interquartile Range (IQR)**:
+
+$$IQR = Q_3 - Q_1$$
+
+where $Q_1$ is the 25th percentile and $Q_3$ is the 75th percentile of the distribution. A data point $x$ is flagged as an outlier if it falls outside the **inner fences**:
+
+$$x < Q_1 - 1.5 \times IQR \quad \text{or} \quad x > Q_3 + 1.5 \times IQR$$
+
+Values beyond $3 \times IQR$ from the quartiles are called **extreme outliers**. A **boxplot** directly visualises these boundaries: the box spans $Q_1$ to $Q_3$, the whiskers extend to the fences, and any points plotted beyond the whiskers are outliers.
+
+### Python Example Code (Univariate)
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('gogoro_data.csv')
+
+fig, axes = plt.subplots(1, 3, figsize=(10, 5))
+for ax, col in zip(axes, ['Func1', 'Price1', 'Brand1']):
+    ax.boxplot(df[col].dropna(), patch_artist=True,
+               boxprops=dict(facecolor='steelblue', alpha=0.6))
+    ax.set_title(col)
+    ax.set_ylabel('Score')
+
+    q1, q3 = df[col].quantile(0.25), df[col].quantile(0.75)
+    iqr = q3 - q1
+    n_out = ((df[col] < q1 - 1.5 * iqr) | (df[col] > q3 + 1.5 * iqr)).sum()
+    ax.set_xlabel(f'Outliers: {n_out}')
+
+plt.suptitle('Univariate Outlier Detection via Boxplot')
+plt.tight_layout()
+plt.show()
+```
+
 **Mahalanobis Distance ($D^2$):** A multidimensional measure calculating how far a data point is from the multi-dimensional center of all variables, adjusting for covariance (how variables correlate with each other, scaling elliptical structures).
 
 **Criteria & Assumptions:**
@@ -164,15 +214,16 @@ An outlier is a data point that differs significantly from other observations, o
 **Industry Application:** In anti-fraud divisions within banking, Mahalanobis Distance is aggressively implemented to detect anomalous credit card behaviors (where individual transaction amounts might be normal, but the combined velocity, location, and amounts deviate from the owner's multi-dimensional covariance matrix).
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
+import scipy.spatial.distance
 
 df = pd.read_csv('gogoro_data.csv')
 X = df[['Func1', 'Price1', 'Brand1']]
 
-m_dist = [stats.mahalanobis(x, X.mean(), np.linalg.inv(X.cov())) for x in X.values]
+m_dist = [scipy.spatial.distance.mahalanobis(x, X.mean(), np.linalg.inv(X.cov())) for x in X.values]
 X = X.copy()
 X['Mahalanobis'] = m_dist
 
@@ -209,7 +260,7 @@ Instead of solely relying on rigid visual histograms, statisticians use rigorous
 **Industry Application:** In algorithmic stock trading, asset returns rarely follow a perfect normal distribution (often featuring "fat tails"/high kurtosis). Ignoring kurtosis leads to catastrophic underestimation of financial crash risks.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import pingouin as pg
 
@@ -241,17 +292,19 @@ This module confirms that the survey items used to measure constructs like "Bran
 To calculate Cronbach’s Alpha for each construct to confirm that the items within a group are reliable.
 
 ### Statistical Perspective
+
 **Internal Consistency & Reliability:** Reliability is the core foundation of psychometric measurement. It essentially assesses the absence of random error mathematically. If an individual respondent truthfully has a highly positive psychological orientation toward "Brand Image," they should subsequently score highly on *all* questions intended to measure that Brand Image. If answers fluctuate wildly within the same psychological construct, the scale is completely unreliable.
 
 **Cronbach’s Alpha ($\alpha$):**
 This is the universally accepted standard metric that calculates the average pairwise correlation among all structural items measuring a specific construct.
+
 - **Criteria Standards:** $\alpha \ge 0.70$ is generally considered acceptable in exploratory management research. $\alpha \ge 0.80$ is classified as definitively good, and $\alpha \ge 0.90$ is excellent. If $\alpha < 0.60$, the construct items must be fundamentally revised or discarded entirely.
 - **Parametric Assumption:** This rigid metric assumes *unidimensionality* (that all the aggregated items mathematically map to one and only one underlying latent psychological variable). It also assumes $\tau$-equivalence, where each item contributes equally to the true score.
 
 **Industry Application:** Human Resources departments rely on internal consistency when purchasing expensive aptitude assessments for hiring. If a leadership questionnaire has an alpha of $0.50$, it's mathematical junk, meaning candidates could get completely different scores simply by taking it again tomorrow.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import pingouin as pg
 
@@ -283,13 +336,14 @@ While internal reliability mathematically guarantees consistency, **Validity** e
 **Convergent Validity:** Demonstrates that distinct empirical indicators (survey questions) of a specific theoretical construct actually converge (share a high proportion of variance in common). For example, asking about "Affordability" and "Value for Money" should yield highly correlated results if they both measure the construct 'Price'.
 
 **Evaluation Criteria:**
+
 - **Standardized Factor Loadings ($\lambda$):** Should ideally be strictly $\ge 0.70$. Since variance is the square of the loading, this means over 50% ($\lambda^2 = 0.7^2 = 0.49$) of the variance in the indicator is definitively explained by the pure construct, rather than random noise. However, in exploratory business studies, loadings $\ge 0.50$ are sometimes grudgingly retained to preserve structural content validity.
 - **Average Variance Extracted ($AVE$):** The grand mean of the squared factor loadings for all items in a single construct. The strict academic criterion is $AVE \ge 0.50$, indicating the construct as a whole mathematically explains more than half the variance of its combined indicators, meaning the underlying signal is stronger than measurement error.
 
 **Industry Application:** In high-stakes clinical psychometrics (e.g., depression diagnostic scales in healthcare), failing convergent validity means doctors are diagnosing patients based on unstructured noise, potentially leading to incorrect pharmaceutical prescriptions.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 from sklearn.decomposition import FactorAnalysis
 
@@ -323,13 +377,14 @@ To ensure constructs are statistically distinct from one another using the Forne
 
 **Fornell-Larcker Criterion:**
 This remains a mathematically stringent statistical test for ensuring discriminant validity via variance comparison.
+
 - **Criteria Mechanics:** The square root of the Average Variance Extracted ($\sqrt{AVE}$) for any given construct must be strictly *greater* than its highest absolute linear correlation coefficient ($r$) with any other construct in the entire model matrix. 
 - **Consequences:** If it fails this test ($\sqrt{AVE} < r$), it essentially proves the construct shares more variance with an outside construct than it does with its own survey items. The researcher is then forced to merge the highly correlated constructs mathematically or completely drop confounding survey items.
 
 **Industry Application:** A streaming service like Netflix running user surveys must ensure their metric for "App Navigability" is strictly discriminant from "Content Quality." If they fail discriminant validity, engineers won't know whether to allocate their multi-million dollar budget toward redesigning the UI or buying better TV shows.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 
 df = pd.read_csv('gogoro_data.csv')
@@ -360,13 +415,14 @@ Because empirical respondents generally provide data for both the independent va
 
 **Harman’s Single Factor Test:**
 This is the classical diagnostic approach to diagnosing Common Method Variance (CMV). It violently forces all structural survey items into an unrotated Principal Component Analysis (PCA) to determine the baseline dimensionality.
+
 - **Criteria Limits:** If a single unrotated principal component emerges that explains over $50\%$ of the total cumulative variance in the dataset, Common Method Bias is deemed severe. It implies the survey method itself is driving the responses, not the theoretical constructs.
 - **Consequences:** If bias is severe, the researcher must physically re-administer the survey with procedural remedies (e.g., separating the IV and DV with a time delay, guaranteeing strict anonymity, or using mixed methods like objective secondary data).
 
 **Industry Application:** In employee performance evaluations, if "Self-Rated Leadership," "Self-Rated Teamwork," and "Self-Rated Productivity" are assessed concurrently, an employee's ego acts as a common method bias, inflating all metrics simultaneously and making the data useless for HR promotions.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 from sklearn.decomposition import PCA
 
@@ -403,6 +459,7 @@ To construct a model where Function, Usability, Price, and Brand Image lead to C
 Path analysis is an extension of multiple regression that allows researchers to visually and computationally evaluate a holistic system of equations simultaneously. Rather than isolating individual regressions, we calculate multi-step directional sequences (e.g., Brand Image $\rightarrow$ Satisfaction $\rightarrow$ Loyalty).
 
 **Key Assumptions in Path Modeling:**
+
 1. **Linearity & Additivity:** The true relationships between constructs are linear.
 2. **No Endogeneity:** Error terms ($\epsilon$) are mutually independent, and no unmeasured variable is lurking in the background silently driving both the IV and the DV.
 3. **Causal Directionality:** The flow of arrows is grounded in robust theoretical reasoning (e.g., temporal logic dictates that observing Brand Image inherently precedes the psychological feeling of Customer Satisfaction, not vice versa).
@@ -411,7 +468,7 @@ Path analysis is an extension of multiple regression that allows researchers to 
 **Industry Application:** In the airline industry, operations teams map structural paths to determine if "Flight Punctuality" impacts "Baggage Claim Satisfaction" directly, or if it purely alters global "Overall Brand Trust", dictating exactly where they should dedicate ground staff resources.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import statsmodels.api as sm
 
@@ -444,6 +501,7 @@ To evaluate the p-values and t-statistics to definitively conclude which factors
 Hypothesis testing uses empirical sample data to decide mathematically whether to definitively reject a pre-defined null hypothesis (e.g., $H_0$: "Brand Image has strictly NO true effect on Customer Satisfaction in the general population").
 
 **Key Statistical Criteria:**
+
 - **p-value ($p$):** The quantitative probability of observing the surveyed data (or something more extreme) if the null hypothesis were absolutely true under the curve. We reject $H_0$ firmly if $p < 0.05$ (establishing a 95% confidence level), or $p < 0.01$ (99% confidence level).
 - **t-statistic ($t$):** Measures the absolute size of the estimated coefficient difference relative to the inherent standard error variation in the sample data. The criterion for statistical significance is typically $t > 1.96$ or $t < -1.96$ for a two-tailed probability test.
 - **Statistical Power ($1 - \beta$):** Having $n=208$ respondents helps guarantee that if there actually *is* an effect to be found in the reality of Taiwan's scooter market, our mathematical test has the "power" to successfully detect it without returning a false negative (Type II error).
@@ -451,7 +509,7 @@ Hypothesis testing uses empirical sample data to decide mathematically whether t
 **Industry Application:** In pharmaceutical trials, Hypothesis Testing dictates whether a million-dollar drug receives FDA approval ($p<0.05$) or gets binned into oblivion ($p>0.05$). The rules are rigid specifically to prevent dangerous false-positive inferences.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import statsmodels.api as sm
 
@@ -489,7 +547,7 @@ When variables are measured on wildly different psychometric units or simply to 
 **Industry Application:** A political campaign mathematically calculates standardized betas on their polling surveys. If the $\beta$ for "Economic Policy" is $0.55$, but the $\beta$ for "Foreign Policy" is only $0.12$, the campaign will ruthlessly cut all advertising budget regarding foreign affairs and focus $100\%$ on economics to maximize voter satisfaction.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import pingouin as pg
 
@@ -520,17 +578,19 @@ To assess how well the theoretical path model fits the data using regression met
 Model fit mathematically describes how well your theoretical statistical architecture actually represents the raw covariance matrix derived from the data. If the model fits poorly, any p-values or beta-paths internal to the model are mathematically dubious.
 
 **Regression Metrics:**
+
 - **$R^2$ (Coefficient of Determination):** Indicates the absolute proportion of variance inside the dependent variable globally explained by the composite sum of all included IVs. (E.g., $R^2 = 0.65$ means $65\%$ of all reasons why people are satisfied are captured in the model).
 - **Adjusted $R^2$:** Standard $R^2$ artificially inflates purely by throwing garbage variables randomly into the equation. Adjusted $R^2$ explicitly penalizes the mathematical model equation for unnecessary complexity and bloat.
 
 **Structural Equation Modeling Metrics (SEM):**
+
 - **CFI (Comparative Fit Index):** Compares your model to a broken "null" model where nothing is correlated. The strict criterion is $CFI > 0.90$ (acceptable) or $> 0.95$ (excellent).
 - **RMSEA (Root Mean Square Error of Approximation):** Estimates the absolute lack of fit per degrees of freedom. The strict criterion demands $RMSEA < 0.08$ (acceptable) to guarantee that your theoretical arrows accurately map to human reality.
 
 **Industry Application:** In supply chain algorithm design at Amazon, researchers look obsessively at Adjusted metrics to avoid "overfitting" the logistical model to Christmas-season noise, ensuring $R^2$ represents genuine year-round demand drivers.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import statsmodels.api as sm
 
@@ -565,6 +625,7 @@ To test if "Customer Satisfaction" acts as a bridge mediating the effect between
 **Mediation Analysis:** Explores structurally *how* or exactly *why* a particular observed causal effect occurs. A mediating theoretical variable (Customer Satisfaction) sits exactly between an exogenous independent variable (Brand Image) and an endogenous dependent variable (Customer Loyalty).
 
 **Categorical Types of Mediation:**
+
 - **Full (Complete) Mediation:** The IV only affects the DV passing *through* the psychological mediator. The direct causal path becomes statistically insignificant ($p > 0.05$) when the mediator is mathematically introduced to the regression block.
 - **Partial Mediation:** The IV independently influences the DV both directly and indirectly through the mediator, indicating multiple causal mechanisms are operating simultaneously.
 
@@ -573,7 +634,7 @@ To test if "Customer Satisfaction" acts as a bridge mediating the effect between
 **Industry Application:** In digital marketing, ad-spend (IV) increases e-commerce sales (DV), but this is "mediated" by website traffic (Mediator). If traffic doesn't increase, sales don't increase, meaning it's a fully mediated relationship essential for tracking campaign ROI.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import pingouin as pg
 
@@ -581,7 +642,7 @@ df = pd.read_csv('gogoro_data.csv')
 
 # pingouin mediation analysis
 med = pg.mediation_analysis(data=df, x='Brand1', m='Sat1', y='Loyal1')
-print(med[['path', 'beta', 'pval']])
+print(med[['path', 'coef', 'pval']])
 ```
 
 ### Student Task
@@ -607,7 +668,9 @@ Determines specifically the practical magnitude of heavily predicting one specif
 Calculated as the difference in global explanation power: $f^2 = \frac{R^2_{included} - R^2_{excluded}}{1 - R^2_{included}}$
 
 **Rigid Practical Criteria:**
+
 According to Cohen (1988), effect sizes quantitatively distinguish causal relevance:
+
 - $f^2 \approx 0.02$: **Small effect** (scientifically present, but possibly not worth spending millions of R&D dollars on).
 - $f^2 \approx 0.15$: **Medium effect** (a solid, reliable driver of consumer behavior that demands corporate attention).
 - $f^2 \approx 0.35$: **Large effect** (a very strong, practically dominant significant effect representing the absolute core foundation of the business to heavily leverage).
@@ -615,7 +678,7 @@ According to Cohen (1988), effect sizes quantitatively distinguish causal releva
 **Industry Application:** In subscription software (SaaS), statistically significant factors like "UI font choice" might have an $f^2$ of $0.01$ (tiny), while "Platform Uptime" has an $f^2$ of $0.45$ (massive). Development engineering hours are thereby universally routed to maximizing uptime infrastructure instead of redesigning the fonts.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import statsmodels.api as sm
 
@@ -653,13 +716,14 @@ Structural models should not only explain historical patterns retroactively ($R^
 An automated, iterative computational process. The algorithmic model systematically deletes specific targeted data points in the empirical data matrix, natively estimates parameters based purely on the remaining points, and blindly attempts to statistically predict the omitted points based strictly on those constrained parameters.
 
 **Criteria & Diagnostic Boundaries:**
+
 - If **$Q^2 > 0$**: The mathematical model formally exhibits objective predictive relevance for a particular endogenous construct, meaning it accurately models real-world physics or psychology better than a pure random guess.
 - If **$Q^2 \le 0$**: The computational model completely lacks out-of-sample predictive capacity and is severely overfitted to the training data. For corporate strategy, executing negative $Q^2$ policy decisions derived from the model is incredibly dangerous, akin to gambling blind.
 
 **Industry Application:** Machine Learning engineers at credit grading agencies like Equifax exclusively care about Out-of-Sample metrics like cross-validated $Q^2$. If a model explains the past crash perfectly ($R^2$) but fails to predict the next default ($Q^2 < 0$), it is financially useless.
 
 ### Python Example Code
-```python
+```{python}
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import cross_val_score
@@ -699,6 +763,10 @@ Following the exhaustive statistical modeling, the statistically significant coe
 If the final output confirms that $\beta_{BrandImage} > \beta_{Function}$, the executive board should radically re-allocate financial capital. Instead of dedicating $100M to minor internal functional motor upgrades that customers barely notice, the enterprise must heavily emphasize marketing the core "eco-friendly" prestige, the aesthetic beauty, and the green psychological identity of owning a Gogoro scooter. By leveraging specifically what heavily drives absolute "Customer Satisfaction," they generate robust long-term "Customer Loyalty."
 
 **Industry Application:** Tech giants like Apple mastered this synthesis long ago. Statistical research showed that beyond a certain threshold, users care infinitely more about seamless cohesive "Brand Ecology" rather than pure RAM processing "Function." Apple consequently markets the integrated experience rather than just raw computer components.
+
+```{python}
+import pandas as pd
+
 df = pd.read_csv('gogoro_data.csv')
 brand_mean = df['Brand1'].mean()
 func_mean = df['Func1'].mean()
@@ -719,4 +787,5 @@ Create `StudentName_Synthesis.py` in Visual Studio Code. Based on your calculate
 
 # References
 
-Shu-Ling Hsu, S.-L. H., Shu-Ling Hsu, Y.-C. C., Yung-Chi Chang, I. V., & Ignasia Vabiola, W.-L. L. (2021). Determinants of customer loyalty of green products – The case of Gogoro in Taiwan. 企業管理學報, 46(4), 015–046. https://doi.org/10.53106/102596272021120464002
+- Bhattacherjee, A. (2012). Social Science Research: Principles, Methods, and Practices. Global Text Project. https://digitalcommons.usf.edu/oa_textbooks/3/
+- Shu-Ling Hsu, S.-L. H., Shu-Ling Hsu, Y.-C. C., Yung-Chi Chang, I. V., & Ignasia Vabiola, W.-L. L. (2021). Determinants of customer loyalty of green products – The case of Gogoro in Taiwan. 企業管理學報, 46(4), 015–046. https://doi.org/10.53106/102596272021120464002
