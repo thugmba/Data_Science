@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \":*)",
+      "Bash(python \"C:/Users/Brian/modify_index.py\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(python3 -c \":*)",
+      "Bash(py -c \":*)",
+      "Bash(py C:/Users/Brian/add_appendix.py)",
+      "Bash(py C:/Users/Brian/enhance_index.py)",
+      "Bash(py C:/Users/Brian/fix_unicode.py)",
+      "Bash(py fix_h0h1.py)",
+      "Bash(py switch_to_statsmodels.py)",
+      "Bash(py switch_remaining.py)",
+      "Bash(py revert_m4_sklearn.py)",
+      "Bash(py switch_sem_semopy.py)"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py -c \":*)",
+      "Bash(ls \"d:/Gdrive/Work/Teaching/Courses/6127_Data_Science_Global_Manager/Data_Science/\"*.ipynb)"
+    ]
+  }
+}
