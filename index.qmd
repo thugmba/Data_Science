@@ -1471,3 +1471,5 @@ Create `StudentName_ModelEvaluation.py` in Visual Studio Code. Add a third model
 
 - Bhattacherjee, A. (2012). Social Science Research: Principles, Methods, and Practices. Global Text Project. https://digitalcommons.usf.edu/oa_textbooks/3/
 - Shu-Ling Hsu, S.-L. H., Shu-Ling Hsu, Y.-C. C., Yung-Chi Chang, I. V., & Ignasia Vabiola, W.-L. L. (2021). Determinants of customer loyalty of green products – The case of Gogoro in Taiwan. 企業管理學報, 46(4), 015–046. https://doi.org/10.53106/102596272021120464002
+
+[Finding Research Topics](./Research_Topic.html)
