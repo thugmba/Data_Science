@@ -19,6 +19,10 @@ Click **Open in Colab** to run a notebook directly in Google Colab.
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/thugmba/Data_Science/blob/main/Labs/Notebooks/Data_Science_S4.ipynb)
 **S4: Section 4 — Normality Testing**
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/thugmba/Data_Science/blob/main/Labs/Notebooks/SEM.ipynb)
+**Structual Equation Modeling**
+
+
 ---
 
 ## Module 2: Measurement Model Verification
